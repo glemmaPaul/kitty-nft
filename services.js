@@ -21,7 +21,7 @@ export function setupWallet(givenPrivateKey) {
 
 function getGasPrice() {
     // TODO: Make a call to ethgasstation to retrieve average gas price
-    return web3.utils.toWei('30', 'gwei')
+    return web3.utils.toWei('3', 'gwei')
 }
 
 function contractFactory(address, abi) {
@@ -65,7 +65,7 @@ export async function createEscrow(address, tokenID, price) {
         escrowMethod.send({ gas })
             .on('receipt', function(data){
                 if (!data.events.EscrowCreated) {
-                    reject(new Error('Could not find Transfer event in receipt'))
+                    reject(new Error('Could not find EscrowCreated event in receipt'))
                 }
 
                 resolve(data.events.EscrowCreated.returnValues.escrowAddress)
@@ -86,24 +86,24 @@ function getEscrowPrice(escrowAddress) {
             if (error) {
                 return reject(error)
             }
-
             resolve(result)
         })
     })
 }
 
 export async function buyEscrow(escrowAddress, weiAmount = null) {
-    const transactionAmount = weiAmount || await getEscrowPrice(escrowAddress)
-
     return new Promise(async (resolve, reject) => {
+        const transactionAmount = weiAmount || await getEscrowPrice(escrowAddress).catch(reject)
         const txOptions = {
             from: applicationAccount.address,
             to: escrowAddress,
             value: transactionAmount,
             gasPrice: getGasPrice()
         }
-        // First get gas limit
-        const gas = await web3.eth.estimateGas(txOptions)
+
+        // First get gas estimation
+        const gas = await web3.eth.estimateGas(txOptions).catch(reject)
+        
         web3.eth.sendTransaction({
             ...txOptions,
             gas
@@ -141,4 +141,13 @@ export async function getAllEscrowCreationEvents(address) {
             }
         );
     })
+}
+
+
+/**
+ * For example purposes only, websocket connections do not automatically close
+ * thus we disconnect the provider after the commands are executed
+ */
+ export function disconnectProvider() {
+    web3.currentProvider.disconnect()
 }

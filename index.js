@@ -1,7 +1,13 @@
 import fs from 'fs';
 import { Command } from 'commander';
 import config from './config.js';
-import { getAllEscrowCreationEvents, mintNFT, setupWallet, createEscrow, buyEscrow } from './services.js'
+import { 
+  getAllEscrowCreationEvents, 
+  mintNFT, 
+  setupWallet, 
+  createEscrow, 
+  buyEscrow, 
+  disconnectProvider } from './services.js'
 
 const walletPath = './.wallet'
 
@@ -27,6 +33,8 @@ program
         return `${acc}Escrow for Token ID: ${values.tokenId} \nPrice: ${values.price} Wei \nBidding Address: ${values.escrowAddress} \n\n`
     }, 'Escrows created: \n\n')
     console.log(message)
+
+    disconnectProvider()
   });
 
 program
@@ -37,6 +45,8 @@ program
     const itemID = await mintNFT(options.address, uri)
 
     console.log(`Newly minted item ID: ${itemID}`)
+
+    disconnectProvider()
   })
 
 program
@@ -47,6 +57,8 @@ program
     const escrowAddress = await createEscrow(options.address, tokenId, price)
 
     console.log(`Newly created escrow on address: ${escrowAddress}`)
+
+    disconnectProvider()
   })
 
 program
@@ -55,12 +67,13 @@ program
   .action(async (escrowAddress, weiAmount) => {
     try {
         const txResults = await buyEscrow(escrowAddress, weiAmount)
-        console.log(`Transaction confirmed on block: ${txResults.blockNumber}, congratulations 🎉`)
+        console.log(`Transaction confirmed on block: ${txResults.blockNumber}, transaction hash: ${txResults.transactionHash} congratulations 🎉`)
     }
     catch (e) {
         console.log(e.message)
     }
     
+    disconnectProvider()
   })
 
 program.parse(process.argv);
