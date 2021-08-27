@@ -12,10 +12,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * @dev Escrow to bid on a NFT
  */
 contract KittyEscrow {
-    address private nft;
-    uint256 private tokenId;
-    address private buyer;
-    address private seller;
+    address public nft;
+    uint256 public tokenId;
+    address public buyer;
+    address public seller;
     
     // Price in Wei
     uint public price;
@@ -34,11 +34,11 @@ contract KittyEscrow {
     }
     
     /**
-     * buy
-     * @dev gives the ability to buy the NFT token
+     * @dev Receive function to accept funds for buying the NFT token
      **/
-    function buy() public payable {
+    receive() external payable {
         require(msg.value == price, "Price has to be exactly the same stated in Escrow");
+        require(buyer == address(0), "This Escrow is already bought by someone else");
         ERC721 nftInterface = ERC721(nft);
         
         require(nftInterface.getApproved(tokenId) == address(this), "Cannot buy token, this Escrow is not allowed to transfer");
@@ -56,7 +56,7 @@ contract KittyEscrow {
 
 contract KittyNFT is ERC721URIStorage {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIDs;
+    Counters.Counter private tokenIds;
     
     event EscrowCreated(uint256 indexed tokenId, uint256 price, address escrowAddress);
 
@@ -67,13 +67,16 @@ contract KittyNFT is ERC721URIStorage {
      * @param tokenURI identifier to be minted
      **/
     function mintNFT(string memory tokenURI) public returns (uint256) {
-       _tokenIDs.increment();
-       uint256 newItemId = _tokenIDs.current();
+       tokenIds.increment();
+       uint256 newItemId = tokenIds.current();
        _safeMint(msg.sender, newItemId);
        _setTokenURI(newItemId, tokenURI);
        return newItemId;
     }
     
+    /**
+     * @dev Creates an escrow for given NFT token ID
+     **/
     function createEscrow(uint256 tokenId, uint256 price) public returns (address) {
         KittyEscrow escrowContract = new KittyEscrow(msg.sender, tokenId, price);
         

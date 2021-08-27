@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Command } from 'commander';
 import config from './config.js';
-import { getAllEscrows, mintKittyNFT, setupWallet } from './services.js'
+import { getAllEscrowCreationEvents, mintNFT, setupWallet, createEscrow, buyEscrow } from './services.js'
 
 const walletPath = './.wallet'
 
@@ -20,7 +20,13 @@ program
   .description('Deploy NFT contract')
   .option('-a --address <address>', "The target NFT contract address", config.nftAddress)
   .action(async (options) => {
-    console.log(await getAllEscrows(options.address))
+    const escrows = await getAllEscrowCreationEvents(options.address)
+    // Generate message to show which Escrows are created
+    const message = escrows.reduce((acc, event) => {
+    const values = event.returnValues
+        return `${acc}Escrow for Token ID: ${values.tokenId} \nPrice: ${values.price} Wei \nBidding Address: ${values.escrowAddress} \n\n`
+    }, 'Escrows created: \n\n')
+    console.log(message)
   });
 
 program
@@ -28,15 +34,32 @@ program
   .description("Mints given uri in NFT contract")
   .option('-a --address <address>', "The target NFT contract address", config.nftAddress)
   .action(async (uri, options) => {
-    const itemID = await mintKittyNFT(options.address, uri)
+    const itemID = await mintNFT(options.address, uri)
 
     console.log(`Newly minted item ID: ${itemID}`)
   })
 
 program
-  .command('create-escrow <itemID> <price>')
+  .command('create-escrow <tokenId> <price>')
   .description('Creates an escrow for given Item ID with given Price in Wei')
-  .action(async (itemID, price) => {
+  .option('-a --address <address>', "The target NFT contract address", config.nftAddress)
+  .action(async (tokenId, price, options) => {
+    const escrowAddress = await createEscrow(options.address, tokenId, price)
+
+    console.log(`Newly created escrow on address: ${escrowAddress}`)
+  })
+
+program
+  .command('buy-escrow <escrowAddress> [weiAmount]')
+  .description('Places a bid to an escrow with given wei amount')
+  .action(async (escrowAddress, weiAmount) => {
+    try {
+        const txResults = await buyEscrow(escrowAddress, weiAmount)
+        console.log(`Transaction confirmed on block: ${txResults.blockNumber}, congratulations 🎉`)
+    }
+    catch (e) {
+        console.log(e.message)
+    }
     
   })
 
