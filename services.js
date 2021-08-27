@@ -19,10 +19,15 @@ export function setupWallet(givenPrivateKey) {
     web3.eth.accounts.wallet.add(applicationAccount)
 }
 
+function getGasPrice() {
+    // TODO: Make a call to ethgasstation to retrieve average gas price
+    return web3.utils.toWei('30', 'gwei')
+}
+
 function contractFactory(address, abi) {
     return new web3.eth.Contract(abi, address, {
         from: applicationAccount.address,
-        gasPrice: web3.utils.toWei('30', 'gwei')
+        gasPrice: getGasPrice()
     })
 }
 
@@ -69,11 +74,15 @@ export async function createEscrow(address, tokenID, price) {
     })
 }
 
+/**
+ * 
+ * @param {String} escrowAddress Address where Escrow contract is located
+ * @returns Price in Wei
+ */
 function getEscrowPrice(escrowAddress) {
     const escrowInstance = getKittyEscrowInstance(escrowAddress)
     return new Promise((resolve, reject) => {
         escrowInstance.methods.price().call((error, result) => {
-            console.log(error, result)
             if (error) {
                 return reject(error)
             }
@@ -91,7 +100,7 @@ export async function buyEscrow(escrowAddress, weiAmount = null) {
             from: applicationAccount.address,
             to: escrowAddress,
             value: transactionAmount,
-            gasPrice: web3.utils.toWei('30', 'gwei')
+            gasPrice: getGasPrice()
         }
         // First get gas limit
         const gas = await web3.eth.estimateGas(txOptions)
@@ -126,7 +135,7 @@ export async function getAllEscrowCreationEvents(address) {
             (errors, events) => {
                 if (!errors && errors !== null) {
                     // process events
-                    reject(new Error((errors || ['Unknown error experienced']).join(', ')))
+                    reject(new Error(errors.join(', ')))
                 }
                 resolve(events)
             }

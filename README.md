@@ -47,3 +47,19 @@ node index.js buy-escrow 0xC12f5AE96EaCdDB3fA9b63D2fae33D5c2a8f5fA6
 ```
 
 **Returns** successful transaction or error
+
+
+### List all Escrows created
+```
+node index.js all-escrows
+```
+
+Example result:
+```
+Escrows created: 
+
+Escrow for Token ID: 1 
+Price: 50000 Wei 
+Bidding Address: 0x3F5C061334c49fde0A76581836234FCb2c06ace7 
+```
+
