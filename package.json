@@ -1,0 +1,16 @@
+{
+  "name": "kitty-token-web3",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "license": "MIT",
+  "commands": {
+    "kittynft": "node index.js"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.1",
+    "commander": "^8.1.0",
+    "solc": "^0.8.7-fixed",
+    "web3": "^1.5.2"
+  }
+}
